@@ -16,8 +16,34 @@ jobs:
         with:
           channel: stable
 
-      - name: Create Android project
-        run: flutter create --platforms=android .
+      - name: Create Flutter Android project
+        run: |
+          rm -rf android
+          flutter create --platforms=android .
+
+      - name: Add Bluetooth permissions
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path("android/app/src/main/AndroidManifest.xml")
+          text = p.read_text()
+
+          permissions = '''
+              <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+                  android:usesPermissionFlags="neverForLocation" />
+              <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+              <uses-permission android:name="android.permission.BLUETOOTH"
+                  android:maxSdkVersion="30" />
+              <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
+                  android:maxSdkVersion="30" />
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
+                  android:maxSdkVersion="30" />
+          '''
+
+          text = text.replace("<application", permissions + "\n    <application", 1)
+          p.write_text(text)
+          PY
 
       - name: Get packages
         run: flutter pub get
