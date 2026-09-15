@@ -1,0 +1,3 @@
+ถ้าโฟลเดอร์นี้ยังไม่มีไฟล์ Android/Gradle ที่สร้างโดย Flutter ให้รัน:
+flutter create .
+จากนั้นให้ทับ lib/main.dart, pubspec.yaml และ AndroidManifest.xml ด้วยไฟล์ใน ZIP นี้
