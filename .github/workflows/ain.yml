@@ -11,39 +11,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 1. เพิ่มการตั้งค่า Java JDK (จำเป็นมากสำหรับการ Build Android)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle' # ช่วยให้ Build ครั้งต่อไปเร็วขึ้น
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true # ช่วยแคช Flutter SDK เพื่อลดเวลา Build
 
-      - name: Create Flutter Android project
+      # 2. ปรับปรุงคำสั่งเพื่อป้องกันปัญหาทับซ้อนของไฟล์เดิม
+      - name: Create Android project
         run: |
-          rm -rf android
-          flutter create --platforms=android .
+          if [ ! -d "android" ]; then
+            flutter create --platforms=android .
+          fi
 
-      - name: Add Bluetooth permissions
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          p = Path("android/app/src/main/AndroidManifest.xml")
-          text = p.read_text()
-
-          permissions = '''
-              <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
-                  android:usesPermissionFlags="neverForLocation" />
-              <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-              <uses-permission android:name="android.permission.BLUETOOTH"
-                  android:maxSdkVersion="30" />
-              <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
-                  android:maxSdkVersion="30" />
-              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"
-                  android:maxSdkVersion="30" />
-          '''
-
-          text = text.replace("<application", permissions + "\n    <application", 1)
-          p.write_text(text)
-          PY
+      # 3. เคลียร์แคชเก่าก่อนเพื่อความชัวร์ว่าไม่ติดขัด
+      - name: Clean project
+        run: flutter clean
 
       - name: Get packages
         run: flutter pub get
