@@ -8,40 +8,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. ดึงโค้ดจาก Repository ลงเครื่องจำลอง
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 1. เพิ่มการตั้งค่า Java JDK (จำเป็นมากสำหรับการ Build Android)
+      # 2. ติดตั้ง Java JDK 17 (อัปเดตเป็น v5 เพื่อไม่ให้ติดเตือน Warning)
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: '17'
-          cache: 'gradle' # ช่วยให้ Build ครั้งต่อไปเร็วขึ้น
+          # ปิด cache: 'gradle' ออกไปก่อน เพื่อไม่ให้ระบบพังตอนหาไฟล์แอนดรอยด์ไม่เจอ
 
+      # 3. ติดตั้ง Flutter SDK
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
-          cache: true # ช่วยแคช Flutter SDK เพื่อลดเวลา Build
 
-      # 2. ปรับปรุงคำสั่งเพื่อป้องกันปัญหาทับซ้อนของไฟล์เดิม
+      # 4. สร้างโฟลเดอร์แอนดรอยด์ (ดักไว้ว่าถ้าไม่มีค่อยสร้าง เพื่อไม่ให้ไฟล์เดิมเสียหาย)
       - name: Create Android project
         run: |
           if [ ! -d "android" ]; then
             flutter create --platforms=android .
           fi
 
-      # 3. เคลียร์แคชเก่าก่อนเพื่อความชัวร์ว่าไม่ติดขัด
+      # 5. ล้างแคชเก่าของ Flutter
       - name: Clean project
         run: flutter clean
 
+      # 6. ดึง Packages / Dependencies ของโปรเจกต์
       - name: Get packages
         run: flutter pub get
 
+      # 7. สั่ง Build เป็นไฟล์ APK เวอร์ชัน Release
       - name: Build APK
         run: flutter build apk --release
 
+      # 8. อัปโหลดไฟล์ APK ออกมาให้ดาวน์โหลดใช้งาน
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
